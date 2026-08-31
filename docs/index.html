@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>testrepo roadmap</title>
+<style>
+  :root {
+    --bg: #f5f6f8;
+    --panel: #ffffff;
+    --border: #e1e4e8;
+    --text: #1f2328;
+    --muted: #6e7781;
+    --header-bg: #eef0f3;
+    --todo: #cfd4da;
+    --in-progress: #f6c945;
+    --done: #4caf7d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117;
+      --panel: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --header-bg: #1c2128;
+      --todo: #6e7681;
+      --in-progress: #d4a72c;
+      --done: #3fb950;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    padding: 24px;
+  }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  p.sub { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
+  .board {
+    display: grid;
+    grid-template-columns: 140px repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: auto;
+  }
+  .cell {
+    background: var(--panel);
+    padding: 10px;
+    min-height: 90px;
+  }
+  .cell.header {
+    background: var(--header-bg);
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: auto;
+    padding: 12px 10px;
+  }
+  .cell.row-label {
+    background: var(--header-bg);
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .dot.todo { background: var(--todo); }
+  .dot.in-progress { background: var(--in-progress); }
+  .dot.done { background: var(--done); }
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .card:last-child { margin-bottom: 0; }
+  .card .title { font-weight: 600; margin-bottom: 4px; }
+  .card .desc { color: var(--muted); font-size: 12px; line-height: 1.4; }
+  .empty { color: var(--muted); font-size: 12px; font-style: italic; }
+</style>
+</head>
+<body>
+<h1>testrepo roadmap</h1>
+<p class="sub">Kaartjes komen uit <code>docs/cards/*.json</code>. Kolommen = status, rijen = categorie.</p>
+<div id="board" class="board"></div>
+
+<script>
+const STATUSES = [
+  { key: "todo", label: "To do" },
+  { key: "in-progress", label: "In progress" },
+  { key: "done", label: "Done" },
+];
+const CATEGORIES = [
+  { key: "features", label: "Features" },
+  { key: "docs", label: "Docs" },
+  { key: "infra", label: "Infra" },
+];
+
+async function loadCards() {
+  const index = await fetch("cards/index.json").then(r => r.json());
+  const cards = await Promise.all(
+    index.map(name => fetch(`cards/${name}`).then(r => r.json()))
+  );
+  return cards;
+}
+
+function renderBoard(cards) {
+  const board = document.getElementById("board");
+  board.innerHTML = "";
+
+  board.appendChild(el("div", "cell header"));
+  for (const s of STATUSES) {
+    const h = el("div", "cell header");
+    h.appendChild(el("span", `dot ${s.key}`));
+    h.appendChild(document.createTextNode(s.label));
+    board.appendChild(h);
+  }
+
+  for (const cat of CATEGORIES) {
+    board.appendChild(el("div", "cell row-label", cat.label));
+    for (const s of STATUSES) {
+      const cell = el("div", "cell");
+      const matches = cards.filter(c => c.category === cat.key && c.status === s.key);
+      if (matches.length === 0) {
+        cell.appendChild(el("div", "empty", "—"));
+      } else {
+        for (const c of matches) {
+          const card = el("div", "card");
+          card.appendChild(el("div", "title", c.title));
+          card.appendChild(el("div", "desc", c.description));
+          cell.appendChild(card);
+        }
+      }
+      board.appendChild(cell);
+    }
+  }
+}
+
+function el(tag, className, text) {
+  const e = document.createElement(tag);
+  if (className) e.className = className;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+loadCards().then(renderBoard).catch(err => {
+  document.getElementById("board").textContent = "Kon roadmap niet laden: " + err;
+});
+</script>
+</body>
+</html>
