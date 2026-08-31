@@ -1,0 +1,7 @@
+{
+  "id": "card-001",
+  "title": "Set up CI",
+  "description": "Add a GitHub Actions workflow that runs tests on every pull request.",
+  "status": "todo",
+  "category": "infra"
+}

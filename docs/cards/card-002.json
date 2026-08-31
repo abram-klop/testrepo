@@ -1,0 +1,7 @@
+{
+  "id": "card-002",
+  "title": "Add contribution guidelines",
+  "description": "Write a CONTRIBUTING.md describing how to open issues and pull requests.",
+  "status": "todo",
+  "category": "docs"
+}
